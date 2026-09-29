@@ -36,22 +36,8 @@
     </div>
   </main>
 
+  <script src="config.js"></script>
   <script>
-    const config = {
-      baseCurrency: "SGD",
-
-      convertedCurrencies: [
-        "MYR",
-        "INR",
-        "USD",
-        "EUR",
-        "THB",
-        "IDR",
-        "VND",
-        "PHP",
-      ]
-    };
-
     const currencies = [
       config.baseCurrency,
       ...config.convertedCurrencies
@@ -422,6 +408,23 @@
         return false;
       }
 
+      const cachedCurrencies =
+        new Set(
+          cached.data.map(
+            item => item.quote
+          )
+        );
+
+      const hasAllRequiredCurrencies =
+        config.convertedCurrencies.every(
+          currency =>
+            cachedCurrencies.has(currency)
+        );
+
+      if (!hasAllRequiredCurrencies) {
+        return false;
+      }
+
       cached.data.forEach(item => {
         rates[item.quote] =
           item.rate;
@@ -429,7 +432,6 @@
 
       return true;
     }
-
 
     function getRateDate (
       rateData

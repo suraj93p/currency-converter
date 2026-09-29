@@ -4,6 +4,8 @@ const CACHE_NAME =
 const APP_FILES = [
   "./",
   "./index.html",
+  "./styles.css",
+  "./config.js",
   "./manifest.json",
   "./icon-180.png",
   "./icon-192.png",
