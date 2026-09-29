@@ -204,10 +204,15 @@
 
       config.convertedCurrencies.forEach(
         currency => {
+          const rate =
+            rates[currency];
+
+          if (!Number.isFinite(rate)) {
+            return;
+          }
+
           parts.push(
-            `${ formatRate(
-              rates[currency]
-            ) } ${ currency }`
+            `${ formatRate(rate) } ${ currency }`
           );
         }
       );
