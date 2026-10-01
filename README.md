@@ -2,7 +2,7 @@
 
 A lightweight, responsive currency converter built with vanilla HTML, CSS and JavaScript.
 
-The application supports conversion between multiple currencies using live exchange rates from the [Frankfurter API](https://frankfurter.dev/). It can also be installed as a Progressive Web App (PWA) on supported devices.
+The config-driven application supports conversion between multiple currencies using live exchange rates from the [Frankfurter API](https://frankfurter.dev/) and also offline fallback through cached data. It can also be installed as a Progressive Web App (PWA) on supported devices.
 
 ## Features
 
@@ -19,7 +19,7 @@ The application supports conversion between multiple currencies using live excha
 
 ## Configuration
 
-Currencies are configured in `config.js`.
+Application configuration is defined in `config.js`.
 
 ```js
 const config = {
@@ -35,7 +35,13 @@ const config = {
     "IDR",
     "VND",
     "PHP"
-  ]
+  ],
+
+  api: {
+    baseUrl: "https://api.frankfurter.dev/v2",
+    currenciesEndpoint: "/currencies",
+    ratesEndpoint: "/rates"
+  }
 };
 ```
 
@@ -48,8 +54,9 @@ Currencies can be added, removed or reordered without changing the application l
 ```text
 currency-converter/
 ├── index.html
-├── styles.css
+├── app.js
 ├── config.js
+├── styles.css
 ├── manifest.json
 ├── service-worker.js
 ├── icon-180.png
@@ -57,6 +64,38 @@ currency-converter/
 ├── icon-512.png
 └── README.md
 ```
+
+## Architecture
+
+The application is intentionally kept simple and framework-free.
+
+- `index.html` contains the page structure and PWA metadata.
+- `styles.css` contains the application styles.
+- `config.js` contains currency and API configuration.
+- `app.js` contains conversion logic, rendering, caching and API integration.
+- `service-worker.js` manages the PWA application cache.
+- `manifest.json` defines installable PWA metadata.
+
+## Offline Behaviour
+
+The application uses two caching mechanisms:
+
+- The service worker caches the application shell, including HTML, JavaScript, CSS, manifest and icons.
+- `localStorage` stores the most recently downloaded exchange rates and currency metadata.
+
+When the network is unavailable, the application can use previously cached exchange-rate data where available.
+
+The Frankfurter API responses themselves are not cached by the service worker.
+
+## Service Worker Updates
+
+The service worker uses a versioned cache name.
+
+When making changes to cached application files, increment the cache version in `service-worker.js`, for example:
+
+```js
+const CACHE_NAME =
+  "currency-converter-v2";
 
 ## Running Locally
 

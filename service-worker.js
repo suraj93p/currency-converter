@@ -1,11 +1,18 @@
+/// <reference lib="webworker" />
+
+const serviceWorker =
+  /** @type {ServiceWorkerGlobalScope} */ (
+    /** @type {unknown} */ (self)
+  );
 const CACHE_NAME =
-  "currency-converter-v1";
+  "currency-converter-v2";
 
 const APP_FILES = [
   "./",
   "./index.html",
-  "./styles.css",
+  "./app.js",
   "./config.js",
+  "./styles.css",
   "./manifest.json",
   "./icon-180.png",
   "./icon-192.png",
@@ -13,88 +20,112 @@ const APP_FILES = [
 ];
 
 
-self.addEventListener(
+/**
+ * @param {ExtendableEvent} event
+ */
+function handleInstall (event) {
+  event.waitUntil(
+    caches
+      .open(CACHE_NAME)
+      .then(cache => {
+        return cache.addAll(
+          APP_FILES
+        );
+      })
+  );
+}
+
+
+serviceWorker.addEventListener(
   "install",
-  event => {
-    event.waitUntil(
-      caches
-        .open(CACHE_NAME)
-        .then(cache => {
-          return cache.addAll(
-            APP_FILES
-          );
-        })
-    );
-  }
+  handleInstall
 );
 
 
-self.addEventListener(
+/**
+ * @param {ExtendableEvent} event
+ */
+function handleActivate (event) {
+  event.waitUntil(
+    caches
+      .keys()
+      .then(keys => {
+        return Promise.all(
+          keys
+            .filter(
+              key =>
+                key !== CACHE_NAME
+            )
+            .map(
+              key =>
+                caches.delete(key)
+            )
+        );
+      })
+  );
+}
+
+
+serviceWorker.addEventListener(
   "activate",
-  event => {
-    event.waitUntil(
-      caches
-        .keys()
-        .then(keys => {
-          return Promise.all(
-            keys
-              .filter(
-                key =>
-                  key !== CACHE_NAME
-              )
-              .map(
-                key =>
-                  caches.delete(key)
-              )
-          );
-        })
-    );
-  }
+  handleActivate
 );
 
 
-self.addEventListener(
-  "fetch",
-  event => {
-    const request =
-      event.request;
+/**
+ * @param {FetchEvent} event
+ */
+function handleFetch (event) {
+  const request =
+    event.request;
 
-    /*
-      Do not cache the exchange-rate API.
-      The application handles that using
-      localStorage.
-    */
+  /*
+    Do not cache the Frankfurter API.
+    API data is handled separately using
+    localStorage.
+  */
 
-    if (
-      request.url.includes(
-        "api.frankfurter.dev"
-      )
-    ) {
-      return;
-    }
+  if (
+    request.url.includes(
+      "api.frankfurter.dev"
+    )
+  ) {
+    return;
+  }
 
-    event.respondWith(
-      fetch(request)
-        .then(response => {
-          const copy =
-            response.clone();
+  event.respondWith(
+    fetch(request)
+      .then(response => {
+        const copy =
+          response.clone();
 
-          caches
-            .open(CACHE_NAME)
-            .then(cache => {
-              cache.put(
-                request,
-                copy
-              );
-            });
+        caches
+          .open(CACHE_NAME)
+          .then(cache => {
+            cache.put(
+              request,
+              copy
+            );
+          });
 
-          return response;
-        })
-        .catch(() => {
-          return caches.match(
+        return response;
+      })
+      .catch(async () => {
+        const cachedResponse =
+          await caches.match(
             request
           );
-        })
-    );
-  }
+
+        return (
+          cachedResponse ??
+          Response.error()
+        );
+      })
+  );
+}
+
+
+serviceWorker.addEventListener(
+  "fetch",
+  handleFetch
 );
