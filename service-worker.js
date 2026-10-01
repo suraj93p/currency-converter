@@ -24,6 +24,8 @@ const APP_FILES = [
  * @param {ExtendableEvent} event
  */
 function handleInstall (event) {
+  serviceWorker.skipWaiting();
+
   event.waitUntil(
     caches
       .open(CACHE_NAME)
@@ -62,6 +64,7 @@ function handleActivate (event) {
             )
         );
       })
+      .then(() => serviceWorker.clients.claim())
   );
 }
 

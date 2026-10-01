@@ -4,9 +4,6 @@ const config = {
     convertedCurrencies: [
         "MYR",
         "INR",
-        "USD",
-        "THB",
-        "EUR",
     ],
 
     api: {

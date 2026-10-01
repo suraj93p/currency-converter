@@ -110,6 +110,26 @@ function formatAmount (value) {
 }
 
 
+function formatAmountDisplay (value) {
+    const amount =
+        formatAmount(value);
+
+    if (
+        amount === "" ||
+        !Number.isFinite(amount)
+    ) {
+        return "";
+    }
+
+    return amount.toLocaleString(
+        "en-US",
+        {
+            useGrouping: true,
+            maximumFractionDigits: 2
+        }
+    );
+}
+
 /**
  * @param {number} value
  * @returns {string}
@@ -215,9 +235,8 @@ function renderCurrencyCards () {
         <input
             id="currency-${ currency }"
             class="amount-input"
-            type="number"
+            type="text"
             inputmode="decimal"
-            step="any"
             ${ currency === config.baseCurrency ? 'value="1"' : "" }
         />
     </div>
@@ -291,7 +310,10 @@ function convert (sourceCurrency) {
 
     const sourceValue =
         parseFloat(
-            inputs[sourceCurrency].value
+            inputs[sourceCurrency].value.replaceAll(
+                ",",
+                ""
+            )
         );
 
     if (Number.isNaN(sourceValue)) {
@@ -318,7 +340,7 @@ function convert (sourceCurrency) {
         }
 
         inputs[currency].value =
-            formatAmount(
+            formatAmountDisplay(
                 valueInBaseCurrency *
                 rates[currency]
             );
@@ -331,9 +353,30 @@ function convert (sourceCurrency) {
 */
 function attachInputListeners () {
     currencies.forEach(currency => {
-        inputs[currency].addEventListener(
+        const input =
+            inputs[currency];
+
+        input.addEventListener(
             "input",
             () => convert(currency)
+        );
+
+        input.addEventListener(
+            "blur",
+            () => {
+                const value =
+                    parseFloat(
+                        input.value.replaceAll(
+                            ",",
+                            ""
+                        )
+                    );
+
+                if (!Number.isNaN(value)) {
+                    input.value =
+                        formatAmountDisplay(value);
+                }
+            }
         );
     });
 }
